@@ -14,7 +14,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Arrays;
 
 import static org.mockito.Mockito.*;
 
@@ -36,11 +39,26 @@ public class TestPersonHandler {
 	}
 
 	@Test
+	void testGetAll() {
+		Person person1 = Person.builder().id(1).surname("Hans").name("Wurst").age(23).build();
+		Person person2 = person1.toBuilder().id(2).surname("Rolf").name("Tester").age(39).build();
+		Flux<Person> userListFlux = Flux.fromIterable(Arrays.asList(person1, person2));
+		when(repository.findAll()).thenReturn(userListFlux);
+		webTestClient.get()
+				.uri("/v1/persons")
+				.accept(MediaType.APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBodyList(Person.class)
+				.contains(person1, person2);
+		verify(repository, times(1)).findAll();
+	}
+
+	@Test
 	void testGetUserById() {
 		Person person = Person.builder().id(1).surname("Hans").name("Wurst").age(23).build();
-		//Person z = person.toBuilder().id(2).build();
-		Mono<Person> UserMono = Mono.just(person);
-		when(repository.findById(1)).thenReturn(UserMono);
+		Mono<Person> userMono = Mono.just(person);
+		when(repository.findById(1)).thenReturn(userMono);
 		webTestClient.get()
 				.uri("/v1/persons/1")
 				.accept(MediaType.APPLICATION_JSON)
@@ -58,6 +76,18 @@ public class TestPersonHandler {
 	}
 
 	@Test
+	void testGetUserByIdNotFound() {
+		when(repository.findById(1)).thenReturn(Mono.empty());
+		webTestClient.get()
+				.uri("/v1/persons/1")
+				.accept(MediaType.APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isNotFound()
+				.expectBody().isEmpty();
+		verify(repository, times(1)).findById(1);
+	}
+
+	@Test
 	public void createUser() {
 		Person person = Person.builder().id(1).surname("Hans").name("Wurst").age(23).build();
 		when(repository.save(person)).thenReturn(Mono.just(person));
@@ -70,5 +100,16 @@ public class TestPersonHandler {
 				.expectHeader().location("/v1/persons/1")
 				.expectBody().isEmpty();
 		verify(repository, times(1)).save(person);
+	}
+
+	@Test
+	public void deleteUser() {
+		when(repository.deleteById(1)).thenReturn(Mono.empty());
+		webTestClient.delete()
+				.uri("/v1/persons/1")
+				.exchange()
+				.expectStatus().isNoContent()
+				.expectBody().isEmpty();
+		verify(repository, times(1)).deleteById(1);
 	}
 }
