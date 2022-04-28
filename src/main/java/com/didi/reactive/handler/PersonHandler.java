@@ -18,7 +18,7 @@ public class PersonHandler {
         this.repository = repository;
     }
 
-    public Mono<ServerResponse> findAll(ServerRequest req) {
+    public Mono<ServerResponse> findAll(ServerRequest ignoredReq) {
         return ServerResponse.ok().body(this.repository.findAll(), Person.class);
     }
 
@@ -35,10 +35,5 @@ public class PersonHandler {
     }
     public Mono<ServerResponse> delete(ServerRequest req) {
         return ServerResponse.noContent().build(this.repository.deleteById(Integer.valueOf(req.pathVariable("id"))));
-    }
-
-    public Mono<ServerResponse> deleteAlternative(ServerRequest request) {
-        return Mono.just(repository.deleteById(Integer.parseInt(request.pathVariable("id"))))
-                .flatMap(val -> ServerResponse.noContent().build());
     }
 }
