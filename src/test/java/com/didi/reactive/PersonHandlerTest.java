@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TestPersonHandler {
+public class PersonHandlerTest {
 
 	@Autowired
 	private ApplicationContext context;
